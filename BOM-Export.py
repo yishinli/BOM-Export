@@ -86,11 +86,11 @@ def walkThrough(bom):
     if showsubs == False:
         for item in bom:
             if item['sub'] < 1:
-                mStr += '"' + item['name'] + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+                mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
         return mStr
     if showsubs == True:
         for item in bom:
-            mStr += '"' + item['name'] + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+            mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
         return mStr
 
 def run(context):
@@ -137,7 +137,7 @@ def run(context):
                         
                     # Get all occurrences in the root component of the active design
                     root = design.rootComponent
-                    occs = root.allOccurrences
+                    occs = root.allOccurrences # occurrences that includes sub-components
 
                     # Gather information about each unique component
                     bom = []
@@ -145,7 +145,7 @@ def run(context):
                         comp = occ.component
                         refocc = occ.isReferencedComponent
                         occtype = occ.childOccurrences.count
-                        #print (occtype)
+                        # print ("DEBUG: ", occtype)
                         jj = 0
                         for bomI in bom:
                             if bomI['component'] == comp:
@@ -171,6 +171,7 @@ def run(context):
                             # Add this component to the BOM
                             bom.append({
                                 'component': comp,
+                                'fullPathName': occ.fullPathName,
                                 'name': shortname,
                                 'pn' : comp.partNumber,
                                 'material' : mat,
@@ -181,8 +182,11 @@ def run(context):
                     # Display the BOM in the console
                     print ('\n')
                     print ( docname + ' BOM\n')
-                    print ('Display Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
+                    print ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
                     print (walkThrough(bom))
+                    title = ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
+                    msg = title + '\n' + walkThrough(bom)
+                    ui.messageBox(msg, 'Bill Of Materials')
                      
                     # Display the BOM Save Dialog 
                     fileDialog = ui.createFileDialog()
@@ -197,16 +201,16 @@ def run(context):
                         return
                     
                     #Write the BOM    
-                    output = open(filename, 'w')
+                    output = open(filename, 'w', encoding='utf-8')
                     output.writelines( docname + ' BOM\n')
-                    output.writelines('Display Name,' + 'Part Number,' + 'Material,'+ 'Count\n')
+                    output.writelines('Full Path Name,' + 'Part Number,' + 'Material,'+ 'Count\n')
                     output.writelines(walkThrough(bom))
                     output.close()            
                     
                     #confirm save
                     ui.messageBox( 'Document Saved to:\n' + filename, '', 0, 2)    
-#                    command = args.firingEvent.sender
-#                    ui.messageBox(_('command: {} executed successfully').format(command.parentCommandDefinition.id))
+                    # command = args.firingEvent.sender
+                    # ui.messageBox(_('command: {} executed successfully').format(command.parentCommandDefinition.id))
                 except:
                     if ui:
                        ui.messageBox(_('command executed failed: {}').format(traceback.format_exc()))
