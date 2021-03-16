@@ -16,16 +16,22 @@ BOM Export supports:
 ##Instalation
 
 ###Windows
-1. Clone it from github, or download it [here.](https://github.com/yishinli/BOM-Export/archive/master.zip),
+1. Clone it from github, or download it [here.](https://github.com/yishinli/BOM-Export/archive/master.zip).
+
 		mkdir -p ~/proj
 		cd ~/proj/
 		git clone https://github.com/yishinli/BOM-Export.git
+
 1. Fusion360->TOOLS->ADD-INs
+
 	![ADD-INS](./readme-resources/FusionAddIns.png)
+
 1. Add it to AddIns, and have it Run on startup
 
 	![ADD-INS](./readme-resources/FusionAddInsStartup.png)
+
 1. Open your design, Solid -> CREATE -> Create BOM
+
 	![ADD-INS](./readme-resources/FusionCreateBOM.png)
 
 ###Mac OS
