@@ -1,7 +1,7 @@
 # BOM-Export
 This addin allows you to export an open assembly to a CSV file so you can manage or import your parts information into other tools or services.
 
-BOM export is a work in progress and as such is not complete. It does, ghowever, fill an important need in its curent state. 
+BOM export is a work in progress and as such is not complete. It does, ghowever, fill an important need in its curent state.
 
 BOM Export supports:
 
@@ -14,6 +14,19 @@ BOM Export supports:
 	* Components Material. If a components has multiple materials on different bodies, multiple materials will be listed  
 
 ##Instalation
+
+###Windows
+1. Clone it from github, or download it [here.](https://github.com/yishinli/BOM-Export/archive/master.zip),
+		mkdir -p ~/proj
+		cd ~/proj/
+		git clone https://github.com/yishinli/BOM-Export.git
+1. Fusion360->TOOLS->ADD-INs
+	![ADD-INS](./readme-resources/FusionAddIns.png)
+1. Add it to AddIns, and have it Run on startup
+
+	![ADD-INS](./readme-resources/FusionAddInsStartup.png)
+1. Open your design, Solid -> CREATE -> Create BOM
+	![ADD-INS](./readme-resources/FusionCreateBOM.png)
 
 ###Mac OS
 1. Download the main GIT repo [Here.](https://github.com/schneik80/BOM-Export/archive/master.zip)  
@@ -33,4 +46,3 @@ BOM Export supports:
 ![Addins](./readme-resources/005.png)    
 10. To confirm that the add-in is available. Close the Add in dialog and look at the bottom of the **Create-Pane**
 ![Addins](./readme-resources/006.png)  
-
