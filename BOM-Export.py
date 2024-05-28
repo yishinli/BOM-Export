@@ -1,14 +1,23 @@
+# -*- coding: UTF-8 -*
 #Author-Kevin Schneider kevin.schneider@autodesk.com
+#Author-Yishin Li ysli@araisrobo.com
 #Description-BOM Export as cvs file
-
 import adsk.core, adsk.fusion, traceback, os, gettext
 commandIdOnPanel = 'Create BOM'
 showversion = True #show versions in xref component names, default is off
-showsubs = False #show the subassemblies in list, for flat BOM default is off. Children are still diplayed this only affects the sub itself
+showsubs = True #show the subassemblies in list, for flat BOM default is off. Children are still diplayed this only affects the sub itself
 docname = 'FOO' # a default name
 
 # global set of event handlers to keep them referenced for the duration of the command
 handlers = []
+
+# Defines the location of the command to be in the DESIGN workspace and 
+# in the CREATE panel below the Pipe command. See the user manual topic
+# on "User Interface Customization" for details on how to get these ID's.
+# https://help.autodesk.com/cloudhelp/ENU/Fusion-360-API/files/UserInterface_UM.htm
+WORKSPACE_ID = 'FusionSolidEnvironment'
+PANEL_ID = 'SolidCreatePanel'
+CMD_ID = commandIdOnPanel
 
 # Support localization
 _ = None
@@ -59,20 +68,6 @@ def commandControlByIdForQAT(id):
     toolbarControl_ = toolbarControls_.itemById(id)
     return toolbarControl_
 
-def commandControlByIdForPanel(id):
-    app = adsk.core.Application.get()
-    ui = app.userInterface
-    if not id:
-        ui.messageBox(_('commandControl id is not specified'))
-        return None
-    workspaces_ = ui.workspaces
-    modelingWorkspace_ = workspaces_.itemById('FusionSolidEnvironment')
-    toolbarPanels_ = modelingWorkspace_.toolbarPanels
-    toolbarPanel_ = toolbarPanels_.item(0)
-    toolbarControls_ = toolbarPanel_.controls
-    toolbarControl_ = toolbarControls_.itemById(id)
-    return toolbarControl_
-
 def destroyObject(uiObj, tobeDeleteObj):
     if uiObj and tobeDeleteObj:
         if tobeDeleteObj.isValid:
@@ -86,11 +81,13 @@ def walkThrough(bom):
     if showsubs == False:
         for item in bom:
             if item['sub'] < 1:
-                mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+                # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+                mStr += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
         return mStr
     if showsubs == True:
         for item in bom:
-            mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+            # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+            mStr += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
         return mStr
 
 def run(context):
@@ -168,25 +165,27 @@ def run(context):
                                 if bodyK.isSolid:
                                     mat += bodyK.material.name
                             
-                            # Add this component to the BOM
-                            bom.append({
-                                'component': comp,
-                                'fullPathName': occ.fullPathName,
-                                'name': shortname,
-                                'pn' : comp.partNumber,
-                                'material' : mat,
-                                'instances': 1,
-                                'sub': occtype,
-                            })
+                            # Add this component to the BOM, only if it is with component.description
+                            if (comp.description):
+                                bom.append({
+                                    'component': comp,
+                                    'fullPathName': occ.fullPathName,
+                                    'name': shortname,
+                                    'pn' : comp.partNumber,
+                                    'material' : mat,
+                                    'desc' : comp.description,
+                                    'instances': 1,
+                                    'sub': occtype,
+                                })
 
                     # Display the BOM in the console
                     print ('\n')
                     print ( docname + ' BOM\n')
-                    print ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
+                    print ('Full Path Name, ' + 'Part Number, ' + 'Description, ' + 'Count')
                     print (walkThrough(bom))
-                    title = ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
-                    msg = title + '\n' + walkThrough(bom)
-                    ui.messageBox(msg, 'Bill Of Materials')
+                    # title = ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
+                    # msg = title + '\n' + walkThrough(bom)
+                    # ui.messageBox(msg, 'Bill Of Materials')
                      
                     # Display the BOM Save Dialog 
                     fileDialog = ui.createFileDialog()
@@ -203,7 +202,7 @@ def run(context):
                     #Write the BOM    
                     output = open(filename, 'w', encoding='utf-8')
                     output.writelines( docname + ' BOM\n')
-                    output.writelines('Full Path Name,' + 'Part Number,' + 'Material,'+ 'Count\n')
+                    output.writelines('Part Number,' + 'Description,' + 'Count\n')
                     output.writelines(walkThrough(bom))
                     output.close()            
                     
@@ -248,9 +247,9 @@ def run(context):
 
         # add a command on create panel in modeling workspace
         workspaces_ = ui.workspaces
-        modelingWorkspace_ = workspaces_.itemById('FusionSolidEnvironment')
+        modelingWorkspace_ = workspaces_.itemById('FusionSolidEnvironment')  # SOLID
         toolbarPanels_ = modelingWorkspace_.toolbarPanels
-        toolbarPanel_ = toolbarPanels_.itemById('SolidCreatePanel') # add the new command under the second panel
+        toolbarPanel_ = toolbarPanels_.itemById('SolidCreatePanel') # SOLID.CREATE - add the new command under the second panel
         toolbarControlsPanel_ = toolbarPanel_.controls
         toolbarControlPanel_ = toolbarControlsPanel_.itemById(commandIdOnPanel)
         if not toolbarControlPanel_:
@@ -275,9 +274,13 @@ def stop(context):
         ui = app.userInterface
         objArrayPanel = []
 
-        commandControlPanel_ = commandControlByIdForPanel(commandIdOnPanel)
-        if commandControlPanel_:
-            objArrayPanel.append(commandControlPanel_)
+        # Gets the toolbar panel containing the button.
+        workspace = ui.workspaces.itemById(WORKSPACE_ID)
+        panel = workspace.toolbarPanels.itemById(PANEL_ID)
+        # Delete the button command control.
+        cntrl = panel.controls.itemById(CMD_ID)
+        if cntrl:
+            cntrl.deleteMe()
 
         commandDefinitionPanel_ = commandDefinitionById(commandIdOnPanel)
         if commandDefinitionPanel_:
@@ -285,7 +288,7 @@ def stop(context):
 
         for obj in objArrayPanel:
             destroyObject(ui, obj)
-
+        
     except:
         if ui:
             ui.messageBox(_('AddIn Stop Failed: {}').format(traceback.format_exc()))
