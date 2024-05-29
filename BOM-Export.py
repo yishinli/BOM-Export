@@ -89,9 +89,9 @@ def walkThrough(bom):
         for item in bom:
             # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
             if (item['desc']):  # with descriptions for BOM
-                parts += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
+                parts += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
             else:               # without descriptions for CHECKING
-                misc += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '",' + str(item['instances']) + '\n'
+                misc  += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '",' + str(item['instances']) + '\n'
         return (parts, misc)
 
 def run(context):
@@ -186,7 +186,7 @@ def run(context):
                     # Display the BOM in the console
                     print ('\n')
                     print (docname + ' BOM\n')
-                    print ('Part Number, ' + 'Description, ' + 'Count')
+                    print ('Full Path Name, ' + 'Part Number, ' + 'Description, ' + 'Count')
                     print (parts)
                     # title = ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
                     # msg = title + '\n' + walkThrough(bom)
@@ -209,7 +209,7 @@ def run(context):
                     #Write the BOM    
                     output = open(filename, 'w', encoding='utf-8')
                     output.writelines(docname + ' BOM\n')
-                    output.writelines('Part Number,' + 'Description,' + 'Count\n')
+                    output.writelines('Full Path Name,' + 'Part Number,' + 'Description,' + 'Count\n')
                     output.writelines(parts)
                     output.close()            
 
@@ -220,7 +220,7 @@ def run(context):
                         misc_file = filename + '-MISC.csv'
                     output = open(misc_file, 'w', encoding='utf-8')
                     output.writelines(docname + ' BOM\n')
-                    output.writelines('Full Path Name, ' + 'Part Number,' + 'Count\n')
+                    output.writelines('Full Path Name,' + 'Part Number,' + 'Count\n')
                     output.writelines(misc)
                     output.close()            
                     
