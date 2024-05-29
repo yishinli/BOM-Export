@@ -77,18 +77,22 @@ def destroyObject(uiObj, tobeDeleteObj):
             
 # walk thru the assembly
 def walkThrough(bom):
-    mStr = ''
-    if showsubs == False:
-        for item in bom:
-            if item['sub'] < 1:
-                # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
-                mStr += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
-        return mStr
+    parts = ''
+    misc = ''
+    #always show subs: if showsubs == False:
+    #always show subs:     for item in bom:
+    #always show subs:         if item['sub'] < 1:
+    #always show subs:             # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
+    #always show subs:             parts += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
+    #always show subs:     return (parts, misc)
     if showsubs == True:
         for item in bom:
             # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
-            mStr += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
-        return mStr
+            if (item['desc']):  # with descriptions for BOM
+                parts += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
+            else:               # without descriptions for CHECKING
+                misc += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '",' + str(item['instances']) + '\n'
+        return (parts, misc)
 
 def run(context):
     ui = None
@@ -166,23 +170,24 @@ def run(context):
                                     mat += bodyK.material.name
                             
                             # Add this component to the BOM, only if it is with component.description
-                            if (comp.description):
-                                bom.append({
-                                    'component': comp,
-                                    'fullPathName': occ.fullPathName,
-                                    'name': shortname,
-                                    'pn' : comp.partNumber,
-                                    'material' : mat,
-                                    'desc' : comp.description,
-                                    'instances': 1,
-                                    'sub': occtype,
-                                })
+                            # if (comp.description):
+                            bom.append({
+                                'component': comp,
+                                'fullPathName': occ.fullPathName,
+                                'name': shortname,
+                                'pn' : comp.partNumber,
+                                'material' : mat,
+                                'desc' : comp.description,
+                                'instances': 1,
+                                'sub': occtype,
+                            })
 
+                    (parts, misc) = walkThrough(bom)
                     # Display the BOM in the console
                     print ('\n')
-                    print ( docname + ' BOM\n')
-                    print ('Full Path Name, ' + 'Part Number, ' + 'Description, ' + 'Count')
-                    print (walkThrough(bom))
+                    print (docname + ' BOM\n')
+                    print ('Part Number, ' + 'Description, ' + 'Count')
+                    print (parts)
                     # title = ('Full Path Name, ' + 'Part Number, ' + 'Material, '+ 'Count')
                     # msg = title + '\n' + walkThrough(bom)
                     # ui.messageBox(msg, 'Bill Of Materials')
@@ -191,6 +196,8 @@ def run(context):
                     fileDialog = ui.createFileDialog()
                     fileDialog.isMultiSelectEnabled = False
                     fileDialog.title = "Save " + docname + " BOM as cvs"
+                    fileDialog.initialDirectory = "c:/tmp"
+                    fileDialog.initialFilename = docname
                     fileDialog.filter = 'Text files (*.csv)'
                     fileDialog.filterIndex = 0
                     dialogResult = fileDialog.showSave()
@@ -201,9 +208,20 @@ def run(context):
                     
                     #Write the BOM    
                     output = open(filename, 'w', encoding='utf-8')
-                    output.writelines( docname + ' BOM\n')
+                    output.writelines(docname + ' BOM\n')
                     output.writelines('Part Number,' + 'Description,' + 'Count\n')
-                    output.writelines(walkThrough(bom))
+                    output.writelines(parts)
+                    output.close()            
+
+                    index = filename.rfind('.csv')
+                    if (index != -1):
+                        misc_file = filename[:index] + '-MISC' + filename[index:]
+                    else:
+                        misc_file = filename + '-MISC.csv'
+                    output = open(misc_file, 'w', encoding='utf-8')
+                    output.writelines(docname + ' BOM\n')
+                    output.writelines('Full Path Name, ' + 'Part Number,' + 'Count\n')
+                    output.writelines(misc)
                     output.close()            
                     
                     #confirm save
@@ -236,8 +254,8 @@ def run(context):
                     #dropDownItems_.add(_('Parts only'), True)
                     #dropDownItems_.add(_('Indented Bom'), False)
                     #dropDownItems_.add(_('Top Level'), False)
-                    commandInputs_.addBoolValueInput('showversion_', 'Show Version', True, '', showversion)
-                    commandInputs_.addBoolValueInput('showsubs_', 'Show Sub-ASSY', True, '', showsubs)
+                    #commandInputs_.addBoolValueInput('showversion_', 'Show Version', True, '', showversion)
+                    #commandInputs_.addBoolValueInput('showsubs_', 'Show Sub-ASSY', True, '', showsubs)
 
                 except:
                     if ui:
