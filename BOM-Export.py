@@ -5,7 +5,6 @@
 import adsk.core, adsk.fusion, traceback, os, gettext
 commandIdOnPanel = 'Create BOM'
 showversion = True #show versions in xref component names, default is off
-showsubs = True #show the subassemblies in list, for flat BOM default is off. Children are still diplayed this only affects the sub itself
 docname = 'FOO' # a default name
 
 # global set of event handlers to keep them referenced for the duration of the command
@@ -79,20 +78,13 @@ def destroyObject(uiObj, tobeDeleteObj):
 def walkThrough(bom):
     parts = ''
     misc = ''
-    #always show subs: if showsubs == False:
-    #always show subs:     for item in bom:
-    #always show subs:         if item['sub'] < 1:
-    #always show subs:             # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
-    #always show subs:             parts += '"' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
-    #always show subs:     return (parts, misc)
-    if showsubs == True:
-        for item in bom:
-            # material: mStr += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['material']) + '",' + str(item['instances']) + '\n'
-            if (item['desc']):  # with descriptions for BOM
-                parts += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
-            else:               # without descriptions for CHECKING
-                misc  += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '",' + str(item['instances']) + '\n'
-        return (parts, misc)
+    bom = sorted(bom, key=lambda d: d['desc'])
+    for item in bom:
+        if (item['desc']):  # with descriptions for BOM
+            parts += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '","' + str(item['desc']) + '",' + str(item['instances']) + '\n'
+        else:               # without descriptions for CHECKING
+            misc  += '"' + str(item['fullPathName']) + '","' + str(item['pn']) + '",' + str(item['instances']) + '\n'
+    return (parts, misc)
 
 def run(context):
     ui = None
@@ -115,7 +107,6 @@ def run(context):
                     command = args.firingEvent.sender
                     global docname
                     global showversion
-                    global showsubs
                     
                     command = args.firingEvent.sender
                     inputs = command.commandInputs
@@ -128,8 +119,6 @@ def run(context):
                             docname = input.value
                         elif input.id == 'showversion_':
                             showversion = input.value
-                        elif input.id == 'showsubs_':
-                            showsubs = input.value                
                 
                     # Make sure we have a desing
                     if not design:
@@ -146,7 +135,6 @@ def run(context):
                         comp = occ.component
                         refocc = occ.isReferencedComponent
                         occtype = occ.childOccurrences.count
-                        # print ("DEBUG: ", occtype)
                         jj = 0
                         for bomI in bom:
                             if bomI['component'] == comp:
@@ -255,7 +243,6 @@ def run(context):
                     #dropDownItems_.add(_('Indented Bom'), False)
                     #dropDownItems_.add(_('Top Level'), False)
                     #commandInputs_.addBoolValueInput('showversion_', 'Show Version', True, '', showversion)
-                    #commandInputs_.addBoolValueInput('showsubs_', 'Show Sub-ASSY', True, '', showsubs)
 
                 except:
                     if ui:
